@@ -29,6 +29,13 @@ class TreeNode:
             # Flow-style entries may attempt to incorrectly reuse comments
             self.comment = self.comments.pop(self.value.start_mark.line + 1, None)
 
+    def __str__(self) -> str:
+        ret = 'value = ' + str(self.value)
+        ret = ret + ' | comment = ' + str(self.comment) + '\n'
+        for child in self.children:
+          ret = ret + ' - ' + str(child)
+        return ret
+
     def add_child(self, value):
         node = TreeNode(value, self.comments, self)
         self.children.append(node)
@@ -118,6 +125,7 @@ class AutoYAMLDirective(Directive):
                 node_value = None
                 if isinstance(node, SequenceNode):
                     node_value = node_item
+                    tree.add_child(node_value)
                 elif isinstance(node, MappingNode):
                     node_key, node_value = node_item
                     # Using complex structures for keys in YAML is possible as
@@ -157,7 +165,7 @@ class AutoYAMLDirective(Directive):
                     definition += node.comment
                 node.comment = nodes.definition_list_item(
                     "",
-                    nodes.term("", node.value.value),
+                    nodes.term("", node.value.value.partition('\n')[0]),
                     definition,
                 )
                 if node.parent.comment is None:
